@@ -1,0 +1,43 @@
+Shader.source[document.currentScript.src.split('js/shaders/')[1]] = `#version 300 es
+precision highp float;
+
+out vec4 fragmentColor;
+in vec2 texCoord; // pass this on from vertex shader
+in vec4 worldPos; 
+in vec3 worldNormal;
+in vec3 color;
+
+// we need to bind texture to this
+uniform sampler2D colorTexture;
+uniform vec4 lightPos[8]; // xyz is the direction, w is 0. If w is 1, then it is a point light 
+uniform vec4 lightPowerDensity[8];
+uniform vec3 eyePosition;
+uniform vec3 shadowColor;
+
+vec4 lightSource;
+
+float shininess;
+
+
+void main(void) {
+  vec3 textureColor = (texture(colorTexture, texCoord)).rgb;
+  vec3 normal = normalize(worldNormal);
+
+  vec3 viewDirection = normalize(eyePosition.xyz - worldPos.xyz);
+
+  shininess = 3.0;
+  
+  //For Sunshine: directional light 
+  vec3 lightDirectionGeneral = vec3(0,0.9,1.3);
+
+  float lightProduct = max(dot(normal, lightDirectionGeneral),0.0);
+  fragmentColor = vec4(0,0,0,0);
+ 
+  vec3 lightDistance = lightPos[1].xyz - worldPos.xyz * lightPos[1].w;
+  vec3 M = lightPowerDensity[1].rgb / (length(lightDistance) * length(lightDistance));
+  vec3 lightDirection = normalize(lightDistance);       
+  fragmentColor = fragmentColor + vec4(M* textureColor * max(dot(normal,lightDirection),0.0), 1);
+  fragmentColor.rgb = fragmentColor.rgb * shadowColor;
+
+}
+`;
